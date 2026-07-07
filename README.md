@@ -16,20 +16,6 @@ Until now.
 
 AGI Screener is a complete candidate evaluation workspace that gives hiring managers the ability to autonomously configure, conduct, and grade conversational technical interviews. The questions are dynamic, customized to candidate skills, and grounded in authoritative textbooks through a local Retrieval-Augmented Generation (RAG) vector engine.
 
----
-
-## Premium Visual & Grading Overhauls
-
-We have introduced the following updates to align the client workspace with a high-performance design:
-- **WriteMate-Inspired Dark Theme**: Implemented a deep pitch-dark background (`#090A0F`) layered with absolute-positioned blue radial gradient overlays, high-contrast pure white action buttons, translucent border parameters (`border-white/20`), and monospaced typography accents (`font-mono`).
-- **Wider Two-Column Layout**: Refactored the candidate welcome page into a responsive dual-column grid structure (tagline checkpoints on the left, ingestion selector controls on the right) that fills the maximum layout width and eliminates margins.
-- **Automated Resume Details Extraction**: Automatically parses candidate Full Name, Email, and Phone Number from the uploaded PDF resume text context via Gemini during ingestion, storing details dynamically inside MongoDB.
-- **Pregenerated Questions Batching**: Uses Gemini to analyze candidate resume details and selected role to pre-generate exactly 5 sequential technical questions all at once, serving them turn-by-turn during the session.
-- **Immediate Dashboard Skeleton Loader**: Instantly moves the user to a pulsing skeleton insights dashboard as soon as the final question is answered, maintaining active UI feedback while Gemini compiles the report.
-- **Devil's Advocate Grading**: Integrated strict grading instructions in LLM evaluator prompts to score vague, brief, or superficial response logs severely (e.g. `0.5 / 10` or `2.0 / 10`).
-- **In-App Markdown Parser**: Formats bold highlights (`**`), section headings (`#`/`##`), and bulleted items (`-`) dynamically inside the candidate summary dashboard, avoiding raw markdown text blocks.
-
----
 
 ## How It Works
 
