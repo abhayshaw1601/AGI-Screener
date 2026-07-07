@@ -1,196 +1,209 @@
-# AI-Powered Role-Based Candidate Screening System
+# AGI Screener
 
-This repository contains the architecture, backend engine, and conversational client interface for an automated candidate evaluation workspace. The system is designed to perform textbook-grounded, multi-turn technical screening assessments based on candidate resume profiles and target engineering roles.
+> The first agentic candidate evaluation system built using Next.js, FastAPI, and LangGraph — screen and grade technical hires autonomously using textbook-grounded retrieval.
 
----
-
-## Tech Stack
-- **Frontend**: `[Next.js 14 (App Router)]` `[React 18]` `[Tailwind CSS]` `[TypeScript]` `[Lucide Icons]`
-- **Backend**: `[FastAPI]` `[Uvicorn]` `[Python 3.11]` `[Motor Async Driver]`
-- **AI/ML Orchestration**: `[LangGraph]` `[LangChain]` `[Google Gemini API]`
-- **Databases**: `[MongoDB]` `[ChromaDB (Vector Store)]`
+![Next.js](https://img.shields.io/badge/Next.js-v14.2.3-black?style=flat-square)
+![FastAPI](https://img.shields.io/badge/FastAPI-Active-blue?style=flat-square)
+![LangGraph](https://img.shields.io/badge/LangGraph-Engine-purple?style=flat-square)
+![MongoDB](https://img.shields.io/badge/MongoDB-Persisted-green?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-gray?style=flat-square)
 
 ---
 
-## 1. Executive Summary and Objective
+Recruiting is slow. Ingesting resumes is manual. Standard tests are easily cheated by online models.
 
-The objective of this system is to streamline the initial stages of technical recruitment by automating role-specific candidate evaluations. The system operates on three primary architectural pillars:
+Until now.
 
-- **Adaptive Agentic Loops**: Orchestrated by LangGraph, the system guides candidates through a dynamic, 5-turn screening interview where subsequent questions are generated based on the evaluation of previous responses.
-- **Automated Resume Extraction**: Candidates upload their resume (PDF), which is parsed using a zero-dependencies keyword extraction layer to identify relevant skills and target libraries.
-- **Textbook-Grounded Retrieval (RAG)**: The generation engine interfaces with a local persistent vector store (ChromaDB), populated with domain-specific machine learning textbooks, to ground the conversation in authoritative source material.
-
-By coupling structured database persistence (MongoDB) with state-machine agentic runtime (LangGraph), this workspace guarantees reliable candidate assessment transcripts and high-quality evaluation reports.
+AGI Screener is a complete candidate evaluation workspace that gives hiring managers the ability to autonomously configure, conduct, and grade conversational technical interviews. The questions are dynamic, customized to candidate skills, and grounded in authoritative textbooks through a local Retrieval-Augmented Generation (RAG) vector engine.
 
 ---
 
-## 2. System Architecture Block Diagram
+## How It Works
 
-The complete system workspace is organized as a decoupled, multi-tier application. Below is the Mermaid block diagram representing the data flows and runtime dependencies:
+```mermaid
+sequenceDiagram
+    participant C as Candidate
+    participant F as Frontend (Next.js)
+    participant B as Backend (FastAPI)
+    participant G as LangGraph Engine
+    participant D as Databases (MongoDB/ChromaDB)
+
+    C->>F: Upload Resume (PDF) & Select Role
+    F->>B: POST /api/interview/start (form-data)
+    B->>B: Parse PDF & Match Skill Keywords
+    B->>G: Invoke Graph (State Inception)
+    G->>D: Similarity Search (Textbook RAG context)
+    G->>G: Generate Q1 via Gemini
+    B->>D: Insert Session & First Log to MongoDB
+    B-->>F: Return session_id & Q1
+    F-->>C: Display Q1 on screen
+    
+    C->>F: Submit Answer
+    F->>B: POST /api/interview/submit (JSON)
+    B->>D: Update MongoDB Log with Answer
+    B->>G: Resume Graph (State Update)
+    G->>G: Step < 5?
+    G-->>B: Yes (Generate Q_next & Loop)
+    B->>D: Add Next Log to MongoDB Session
+    B-->>F: Return next_question
+    
+    G-->>B: No (Finalize & Synthesize Evaluation Report)
+    B->>D: Mark session COMPLETED & Save Evaluation
+    B-->>F: Return evaluation_summary
+    F-->>C: Display Assessment Report & Transcript Tree
+```
+
+---
+
+## Architecture
 
 ```mermaid
 graph TD
-    classDef client fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
-    classDef gateway fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef engine fill:#1e293b,stroke:#a855f7,stroke-width:2px,color:#f8fafc;
-    classDef storage fill:#1e293b,stroke:#10b981,stroke-width:2px,color:#f8fafc;
+    subgraph Client Layer
+        FL[Next.js Client Components]
+        DZ[Drag-and-Drop Dropzone]
+        CH[Chat Conversation Panel]
+        EV[Insights Dashboard View]
+    end
 
-    Client["Next.js Frontend Client (App Router)"]:::client
-    Gateway["FastAPI Gateway Layer (Uvicorn / ASGI)"]:::gateway
-    Engine["LangGraph State Machine Execution Engine"]:::engine
-    Chroma["ChromaDB Vector Storage Engine"]:::storage
-    Mongo["MongoDB State Persistence Engine"]:::storage
+    subgraph FastAPI Application Layer
+        RTR[Interview API Router]
+        DB[Database Connection Dependency]
+        RP[Resume Keyword Parser]
+        CFG[Central Application Config]
+    end
 
-    Client -- HTTP REST Requests --> Gateway
-    Gateway -- Invoke Graph / State Inception --> Engine
-    Engine -- Similarity Search RAG --> Chroma
-    Engine -- Persistent State Storage --> Mongo
+    subgraph LangGraph Execution Engine
+        SM[State Machine Router]
+        GQ[Question Node]
+        FN[Finalize Node]
+        CR[Conditional Edge Router]
+    end
+
+    subgraph Infrastructure Persistence Layer
+        MDB[MongoDB Sessions Collection]
+        CDB[ChromaDB ML Vector Index]
+        GEM[Google Gemini LLM Engine]
+    end
+
+    FL --> RTR
+    DZ --> RP
+    CH --> RTR
+    EV --> RTR
+
+    RTR --> DB
+    RTR --> SM
+    
+    SM --> GQ
+    SM --> FN
+    SM --> CR
+
+    GQ --> CDB
+    GQ --> GEM
+    FN --> GEM
+
+    DB --> MDB
 ```
 
 ---
 
-## 3. Logical System Flow Diagram
-
-The flowchart below maps the lifecycle of an active interview session from candidate ingestion to final report rendering:
+## Screening Lifecycle Phases
 
 ```mermaid
-flowchart TD
-    classDef step fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
-    classDef decision fill:#1e293b,stroke:#e2e8f0,stroke-width:2px,color:#f8fafc;
+graph LR
+    subgraph Phase 1: Ingestion
+        A1[Load Textbook PDF] --> A2[Recursive Character Split] --> A3[Store vector embeddings in ChromaDB]
+    end
 
-    Start["Candidate Entry: Upload + Role Selection"]:::step
-    Parse["Resume Processing: PyPDF Text Extraction"]:::step
-    Keywords["Identify Keywords & Candidate Skills"]:::step
-    Init["LangGraph State Inception"]:::step
-    LoopCheck{"Loop Check: Step < 5?"}:::decision
-    RAG["Dynamic RAG Context Query Retrieval"]:::step
-    Gen["LLM Context-Aware Question Generation"]:::step
-    Wait["Yield and Wait for User Answer"]:::step
-    Submit["Receive SubmitAnswer API Request"]:::step
-    Update["Append Answer & Increment Step Count"]:::step
-    Finalize["Transition to Finalize Node"]:::step
-    Eval["LLM Evaluation Summary Synthesis"]:::step
-    Complete["Update MongoDB Session Status to COMPLETED"]:::step
-    Render["Render Performance Insights Screen"]:::step
+    subgraph Phase 2: Session Setup
+        B1[Upload candidate resume] --> B2[Match skill keywords] --> B3[Initialize LangGraph memory state]
+    end
 
-    Start --> Parse
-    Parse --> Keywords
-    Keywords --> Init
-    Init --> LoopCheck
-    LoopCheck -- Yes --> RAG
-    RAG --> Gen
-    Gen --> Wait
-    Wait --> Submit
-    Submit --> Update
-    Update --> LoopCheck
-    LoopCheck -- No --> Finalize
-    Finalize --> Eval
-    Eval --> Complete
-    Complete --> Render
+    subgraph Phase 3: Conversational Loop
+        C1[Generate question turn] --> C2[Wait for answer submission] --> C3[Assess and transition state]
+    end
+
+    style A1 fill:#1e293b,stroke:#334155,color:#f8fafc
+    style B1 fill:#1e293b,stroke:#334155,color:#f8fafc
+    style C1 fill:#1e293b,stroke:#334155,color:#f8fafc
 ```
 
 ---
 
-## 4. AI/ML RAG Pipeline Specification
+## Ingestion and RAG Specifications
 
-The system incorporates a Retrieval-Augmented Generation (RAG) framework to ensure the questions generated are anchored in validated academic literature rather than LLM parametric memory.
+To ensure the screening questions remain grounded and relevant, the system extracts context from core textbook reference material:
 
-### Ingestion Mechanics
-- **Document Ingestion**: Target PDF material (e.g., `./knowledge_base/ml_book.pdf`) is read using `PyPDFLoader` to cleanly extract text page-by-page.
-- **Text Splitting**: Document strings are decomposed using `RecursiveCharacterTextSplitter`.
-  - **Chunk Size**: 600 characters.
-  - **Chunk Overlap**: 60 characters.
-  - **Separators**: Paragraphs (`\n\n`), sentences (`\n`), words (` `), and empty strings (`""`).
-
-### Vector Space Vectorization
-- **Embeddings Model**: Configured to utilize Google GenAI `models/text-embedding-004` (or `text-embedding-3-small` for alternative OpenAI pathways).
-- **Vector Base Store**: Persisted locally in a ChromaDB database collections index (`chroma_db/`), allowing for fast cosine similarity index lookups.
-
-### Agentic Context Trajectory
-Unlike standard linear chains which struggle with multi-turn conversation tracking, this system leverages a graph-based state router using LangGraph.
-- **State Preservation**: The session details are managed inside the `InterviewState` structure.
-- **Asynchronous Stateless Transitions**: The state is reloaded back into the graph via `.update_state(config, ...)` and resumed using `.invoke(None, config)`. This decouples the state execution from the stateless HTTP protocol of FastAPI.
+| Parameter | Configuration | Purpose |
+|---|---|---|
+| Ingestion Tool | `PyPDFLoader` | Reads target text cleanly page-by-page |
+| Split Strategy | `RecursiveCharacterTextSplitter` | Breaks documents into semantic segments |
+| Chunk Size | 600 characters | Retains concise, highly contextual blocks |
+| Chunk Overlap | 60 characters | Retains context continuity between boundaries |
+| Embeddings Model | `models/text-embedding-004` | High-accuracy Google GenAI embeddings mapping |
+| Vector Store | ChromaDB | Local disk-persisted vector search indexing |
 
 ---
 
-## 5. Database Schema Designs
+## API Reference
 
-The persistence layer relies on MongoDB. Data models are mapped dynamically using Pydantic validation schemas.
+### Endpoints
 
-### Collection: sessions
-
-```json
-{
-  "_id": "UUID String (Session Identifier)",
-  "role": "Target Job Position (String)",
-  "skills": ["Array of extracted skill strings"],
-  "status": "Current session state (ACTIVE | COMPLETED)",
-  "current_step": "Current question turn (Integer, 1 to 5)",
-  "max_questions": "Limit configuration (Integer, default 5)",
-  "evaluation_summary": "Markdown string containing LLM evaluation (Nullable)",
-  "created_at": "ISO DateTime String",
-  "logs": [
-    {
-      "question": "Question text generated by LLM (String)",
-      "answer": "Candidate response text (String, Nullable if current)",
-      "timestamp": "ISO DateTime String"
-    }
-  ]
-}
-```
+| Endpoint | Method | Request Body | Description |
+|---|---|---|---|
+| `/api/interview/start` | POST | `multipart/form-data` (PDF + Role) | Parses resume, generates Q1, inserts session state |
+| `/api/interview/submit` | POST | `JSON` (Session ID + Answer) | Appends answer, advances graph, returns next Q or report |
+| `/api/interview/summary/{id}`| GET | None | Retrieves complete Q/A transcript and grading details |
 
 ---
 
-## 6. Comprehensive Local Setup Guide
+## Environment Variables
 
-Follow the instructions below to configure and launch the system components locally.
+Configure these settings inside `backend/.env`:
 
-### Pre-requisites
-- **Node.js**: Version 18.0.0 or higher.
-- **Python**: Version 3.11.0 or higher.
-- **MongoDB**: A running local or cloud instance.
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `GEMINI_API_KEY` | Yes | — | Google Gemini LLM API authorization key |
+| `MONGODB_URL` | No | `mongodb://localhost:27017` | URI connection string for MongoDB instance |
+| `MONGODB_DB_NAME` | No | `screener_db` | Collection database name inside MongoDB |
+| `APP_TITLE` | No | `PG AGI Screener API` | Name identifier for FastAPI application |
+| `MAX_INTERVIEW_QUESTIONS`| No | `5` | Turns limit before evaluation finalization |
 
-### Environment Configurations
-Create a `.env` file in the `backend/` directory based on the template below:
+---
 
-```env
-# Gemini API Key (Required for LLM and Embeddings)
-GEMINI_API_KEY=your_gemini_api_key_here
+## Local Setup
 
-# OpenAI API Key (Optional fallback)
-OPENAI_API_KEY=your_openai_api_key_here
+### System Pre-requisites
+- Node.js version 18.0.0 or higher
+- Python version 3.11.0 or higher
+- Active local or cloud instance of MongoDB
 
-# MongoDB Connection Properties
-MONGODB_URL=mongodb://localhost:27017
-MONGODB_DB_NAME=screener_db
+### Backend Startup
 
-# Application Configuration
-APP_TITLE=PG AGI Screener API
-MAX_INTERVIEW_QUESTIONS=5
-```
-
-### Backend Initialization Setup
-Open a terminal workspace, navigate to the `backend/` directory, and perform the setup:
+Run these commands inside the `backend/` directory:
 
 1. **Activate Python Virtual Environment**:
    ```powershell
    python -m venv .venv
    .venv\Scripts\activate
    ```
-2. **Install Dependencies**:
+2. **Install Package Dependencies**:
    ```bash
    uv pip install -r requirements.txt
    ```
    *(Or standard pip if uv is not configured: `pip install -r requirements.txt`)*
-3. **Launch local database (if required)**: Ensure MongoDB service is running locally on port 27017.
-4. **Launch Backend Server**:
+3. **Start FastAPI Application Server**:
    ```bash
    python -m uvicorn main:app --reload --port 8000
    ```
-   Verify the API endpoints by opening the interactive documentation page at `http://127.0.0.1:8000/docs`.
 
-### Frontend Application Initialization
-Open a new terminal workspace, navigate to the `frontend/` directory, and perform the setup:
+Verify route registration by visiting: `http://127.0.0.1:8000/docs`
+
+---
+
+### Frontend Startup
+
+Run these commands inside the `frontend/` directory:
 
 1. **Install Node Packages**:
    ```bash
@@ -200,16 +213,55 @@ Open a new terminal workspace, navigate to the `frontend/` directory, and perfor
    ```bash
    npm run dev
    ```
-3. **Open Browser Viewport**: Access the interface at `http://localhost:3000`.
+
+Access the client application by visiting: `http://localhost:3000`
 
 ---
 
-## 7. Development and Verification Tasks
+## Why LangGraph for Interviews
 
-Progress checklist for the implementation phase:
+| Feature | LangGraph State Machine | Standard Linear Chain |
+|---|---|---|
+| Conversation Loop Routing | Non-linear routing based on step counters | Strictly linear pipeline execution |
+| Memory Management | Persistent checkpointer (thread-scoped) | Stateless context payload builder |
+| Yielding State Mid-Flow | Supported (pauses at END awaiting inputs) | Not supported (requires full run execution) |
+| Non-Blocking REST Integration | Highly viable (stateless load-save logic) | Requires manually passing chat history |
 
-- [x] Ingestion Engine: PDF chunk parsing and vector db creation
-- [x] State Machine Router: LangGraph conversation loops
-- [x] Database Transition: Swapped SQLite for Motor MongoDB persistence
-- [x] Client Interface: Interactive Next.js App Router workspace
-- [x] Production Verification: Clean builds with type checking
+---
+
+## Roadmap
+
+**Now — Complete Local Workspace**
+- Zero-dependency PDF parsing and skill matching.
+- Asynchronous FastAPI endpoints with embedded logs.
+- Dynamic 5-step conversational agentic interview workspace.
+- MongoDB document mapping configuration.
+
+**Next — RAG Database Hook**
+- Connect the placeholder retrieval node with live local ChromaDB collections.
+- Expand tech keyword indexing matching logic.
+
+**Future — Custom Screen Templates**
+- Support manager-defined textbook uploads per role.
+- Custom grading score benchmarks.
+
+---
+
+## Tech Stack
+
+- **Frontend**: Next.js 14, React 18, Tailwind CSS, TypeScript, Lucide Icons, Framer Motion
+- **Backend**: FastAPI, Uvicorn, Python 3.11, Motor Async MongoDB Driver
+- **AI/ML Engine**: LangGraph, LangChain, Google Gemini API
+- **Persistence**: MongoDB, ChromaDB
+
+---
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss options.
+
+---
+
+## License
+
+MIT — see [LICENSE](./LICENSE)
