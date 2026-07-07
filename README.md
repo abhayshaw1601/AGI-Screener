@@ -107,25 +107,29 @@ graph TD
 
 ---
 
-## Screening Lifecycle Phases
+## RAG Flow
 
 ```mermaid
-graph LR
-    subgraph Phase 1: Ingestion
-        A1[Load Textbook PDF] --> A2[Recursive Character Split] --> A3[Store vector embeddings in ChromaDB]
+flowchart TD
+    classDef process fill:#1e293b,stroke:#334155,color:#f8fafc;
+    classDef storage fill:#1e293b,stroke:#10b981,color:#f8fafc;
+
+    subgraph Ingestion Flow
+        A1[ML Textbook PDF]:::process --> A2[PyPDFLoader Text Extraction]:::process
+        A2 --> A3[Recursive Splitting: 600 Size / 60 Overlap]:::process
+        A3 --> A4[Google GenAI Embeddings Generation]:::process
+        A4 --> A5[(ChromaDB Vector Index)]:::storage
     end
 
-    subgraph Phase 2: Session Setup
-        B1[Upload candidate resume] --> B2[Match skill keywords] --> B3[Initialize LangGraph memory state]
+    subgraph Retrieval & Generation Flow
+        B1[Interview State: Current Role + Skills]:::process --> B2[Search Query Formulation]:::process
+        B2 --> B3[Query Vectorization]:::process
+        B3 --> B4[Similarity Search Lookup]:::process
+        A5 -.-> B4
+        B4 --> B5[Retrieve Top-K Text Chunks]:::process
+        B5 --> B6[Construct Grounded System Prompt]:::process
+        B6 --> B7[Gemini Generates Targeted Question]:::process
     end
-
-    subgraph Phase 3: Conversational Loop
-        C1[Generate question turn] --> C2[Wait for answer submission] --> C3[Assess and transition state]
-    end
-
-    style A1 fill:#1e293b,stroke:#334155,color:#f8fafc
-    style B1 fill:#1e293b,stroke:#334155,color:#f8fafc
-    style C1 fill:#1e293b,stroke:#334155,color:#f8fafc
 ```
 
 ---
