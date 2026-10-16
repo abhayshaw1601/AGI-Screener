@@ -290,7 +290,8 @@ export default function WorkspacePage() {
     setWelcomeError("");
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const rawApiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const apiBase = rawApiBase.replace(/\/+$/, "");
       const formData = new FormData();
       formData.append("role", selectedRole);
       formData.append("file", resumeFile);
@@ -355,7 +356,8 @@ export default function WorkspacePage() {
     ]);
 
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const rawApiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const apiBase = rawApiBase.replace(/\/+$/, "");
       const response = await fetch(`${apiBase}/api/interview/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

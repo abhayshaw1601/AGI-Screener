@@ -72,10 +72,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — wide open for local development
+# CORS — support local dev and deployments (including Vercel preview and production domains)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://agi-screener.vercel.app",
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
